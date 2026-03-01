@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptMaster — MVP em Horas, Não em Semanas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0A0A0A;
+    --orange: #FF6B00;
+    --orange-hover: #E55A00;
+    --orange-light: #FF8C33;
+    --orange-bg: #1A0A00;
+    --surface-1: #111111;
+    --surface-2: #1A1A1A;
+    --surface-3: #2A2A2A;
+    --border: #2A2A2A;
+    --text: #F5F5F5;
+    --muted: #A0A0A0;
+    --disabled: #555555;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ---- NOISE TEXTURE ---- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,107,0,0.1);
+  }
+
+  .logo {
+    font-size: 1.2rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--orange); }
+
+  .nav-cta {
+    background: var(--orange);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background 0.2s, transform 0.15s;
+    text-transform: uppercase;
+  }
+  .nav-cta:hover { background: var(--orange-hover); transform: translateY(-1px); }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(255,107,0,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-glow-2 {
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,107,0,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--orange-bg);
+    border: 1px solid rgba(255,107,0,0.3);
+    color: var(--orange-light);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    margin-bottom: 32px;
+    width: fit-content;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge::before { content: '▶'; font-size: 0.6rem; }
+
+  .hero-title {
+    font-size: clamp(3rem, 7vw, 7rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -3px;
+    text-transform: uppercase;
+    max-width: 900px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero-title .accent { color: var(--orange); display: block; }
+  .hero-title .outline {
+    -webkit-text-stroke: 2px rgba(245,245,245,0.25);
+    color: transparent;
+  }
+
+  .hero-sub {
+    margin-top: 32px;
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+    font-weight: 400;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 600; }
+
+  .hero-actions {
+    margin-top: 48px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    background: var(--orange);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 16px 36px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .btn-primary:hover { background: var(--orange-hover); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,107,0,0.3); }
+  .btn-primary::after { content: '→'; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    padding: 16px 36px;
+    border: 1px solid var(--surface-3);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+
+  .hero-stats {
+    margin-top: 80px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    max-width: 500px;
+    border: 1px solid var(--surface-3);
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .stat {
+    padding: 20px 24px;
+    background: var(--surface-1);
+  }
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--orange);
+    letter-spacing: -1px;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ---- PROBLEM SECTION ---- */
+  .section {
+    padding: 100px 48px;
+  }
+
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--orange);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-tag::before { content: '//'; opacity: 0.5; }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    text-transform: uppercase;
+    max-width: 700px;
+  }
+
+  /* ---- COMPARISON ---- */
+  .comparison {
+    background: var(--surface-1);
+    padding: 100px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .comparison::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+  }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    margin-top: 64px;
+    border: 1px solid var(--surface-3);
+  }
+
+  .comp-col {
+    padding: 40px;
+  }
+
+  .comp-col.bad { background: var(--surface-2); }
+  .comp-col.good { background: rgba(26,10,0,0.5); }
+
+  .comp-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    background: var(--surface-3);
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--muted);
+    writing-mode: horizontal-tb;
+    border-left: 1px solid var(--surface-3);
+    border-right: 1px solid var(--surface-3);
+  }
+
+  .comp-header {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--surface-3);
+  }
+  .comp-header.bad-label { color: var(--disabled); }
+  .comp-header.good-label { color: var(--orange); }
+
+  .code-block {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.8;
+    padding: 20px;
+    background: rgba(0,0,0,0.4);
+    border-left: 3px solid var(--surface-3);
+    white-space: pre-wrap;
+    color: var(--muted);
+  }
+  .code-block.good-code { border-left-color: var(--orange); color: var(--text); }
+
+  .code-comment { color: #555; }
+  .code-key { color: var(--orange-light); }
+  .code-val { color: #9dd; }
+  .code-str { color: #b8f; }
+
+  .comp-result {
+    margin-top: 24px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .comp-result.bad-result { background: rgba(255,50,50,0.05); border: 1px solid rgba(255,50,50,0.15); color: #f88; }
+  .comp-result.good-result { background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.25); color: var(--orange-light); }
+
+  /* ---- TIMELINE ---- */
+  .timeline {
+    padding: 100px 48px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .timeline-steps {
+    margin-top: 64px;
+    position: relative;
+  }
+
+  .timeline-steps::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--orange), transparent);
+  }
+
+  .t-step {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: fadeRight 0.5s ease forwards;
+  }
+  .t-step:nth-child(1) { animation-delay: 0.1s; }
+  .t-step:nth-child(2) { animation-delay: 0.2s; }
+  .t-step:nth-child(3) { animation-delay: 0.3s; }
+  .t-step:nth-child(4) { animation-delay: 0.4s; }
+  .t-step:nth-child(5) { animation-delay: 0.5s; }
+
+  .t-num {
+    width: 56px;
+    height: 56px;
+    background: var(--orange-bg);
+    border: 1px solid rgba(255,107,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--orange);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .t-content {
+    padding-top: 12px;
+  }
+
+  .t-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+  }
+
+  .t-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .t-desc {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .t-tag {
+    display: inline-block;
+    background: var(--surface-2);
+    border: 1px solid var(--surface-3);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    margin-top: 12px;
+    color: var(--muted);
+  }
+
+  /* ---- FEATURES ---- */
+  .features {
+    background: var(--surface-1);
+    padding: 100px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 64px;
+    background: var(--surface-3);
+    border: 1px solid var(--surface-3);
+  }
+
+  .feature-card {
+    background: var(--surface-1);
+    padding: 40px 36px;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--orange);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .feature-card:hover::after { transform: scaleX(1); }
+  .feature-card:hover { background: var(--surface-2); }
+
+  .feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    display: block;
+    filter: grayscale(0.3);
+  }
+
+  .feature-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+
+  .feature-desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  /* ---- TESTIMONIALS ---- */
+  .testimonials {
+    padding: 100px 48px;
+    overflow: hidden;
+  }
+
+  .t-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 64px;
+  }
+
+  .t-card {
+    background: var(--surface-1);
+    border: 1px solid var(--surface-3);
+    padding: 32px;
+    transition: border-color 0.2s;
+  }
+  .t-card:hover { border-color: rgba(255,107,0,0.3); }
+
+  .t-quote {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+  .t-quote::before { content: '"'; color: var(--orange); font-style: normal; font-size: 1.5rem; line-height: 0; vertical-align: -0.4em; margin-right: 4px; }
+
+  .t-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .t-avatar {
+    width: 36px;
+    height: 36px;
+    background: var(--orange-bg);
+    border: 1px solid rgba(255,107,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--orange);
+    font-weight: 700;
+  }
+  .t-name { font-weight: 700; font-size: 0.85rem; }
+  .t-role { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  /* ---- PRICING ---- */
+  .pricing {
+    background: var(--surface-1);
+    padding: 100px 48px;
+    position: relative;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 64px;
+    background: var(--surface-3);
+    border: 1px solid var(--surface-3);
+  }
+
+  .price-card {
+    background: var(--surface-1);
+    padding: 48px 36px;
+    position: relative;
+  }
+
+  .price-card.featured {
+    background: var(--orange-bg);
+    border: 1px solid rgba(255,107,0,0.4);
+    margin: -1px;
+    z-index: 1;
+  }
+
+  .price-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--orange);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 4px 16px;
+    white-space: nowrap;
+  }
+
+  .price-tier {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+
+  .price-value {
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  .price-period {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 8px;
+    margin-bottom: 32px;
+  }
+
+  .price-features {
+    list-style: none;
+    margin-bottom: 36px;
+  }
+  .price-features li {
+    font-size: 0.85rem;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--surface-3);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .price-features li::before {
+    content: '→';
+    color: var(--orange);
+    font-size: 0.7rem;
+  }
+  .price-features li.active { color: var(--text); }
+
+  .price-btn {
+    width: 100%;
+    padding: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 700;
+  }
+  .price-btn.primary { background: var(--orange); color: #fff; border: none; }
+  .price-btn.primary:hover { background: var(--orange-hover); }
+  .price-btn.outline { background: transparent; color: var(--orange); border: 1px solid var(--orange); }
+  .price-btn.outline:hover { background: var(--orange); color: #fff; }
+
+  /* ---- CTA FINAL ---- */
+  .cta-final {
+    padding: 120px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-final::before {
+    content: 'MVP';
+    position: absolute;
+    font-size: 30vw;
+    font-weight: 900;
+    color: rgba(255,107,0,0.03);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: -10px;
+    white-space: nowrap;
+  }
+
+  .cta-final-title {
+    font-size: clamp(2.5rem, 6vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -3px;
+    text-transform: uppercase;
+    line-height: 0.95;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .cta-final-title .orange { color: var(--orange); }
+
+  .cta-final-sub {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .cta-box {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .cta-guarantee {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ---- FOOTER ---- */
+  footer {
+    border-top: 1px solid var(--surface-3);
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--disabled);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeRight {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ---- SCROLLBAR ---- */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--orange); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .hero { padding: 100px 24px 60px; }
+    .section, .comparison, .features, .testimonials, .pricing { padding: 64px 24px; }
+    .comparison-grid { grid-template-columns: 1fr; }
+    .comp-divider { width: 100%; height: 40px; writing-mode: horizontal-tb; flex-direction: row; }
+    .features-grid { grid-template-columns: 1fr; }
+    .t-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: repeat(3, 1fr); max-width: 100%; }
+    .cta-final { padding: 80px 24px; }
+    footer { flex-direction: column; gap: 12px; padding: 24px; text-align: center; }
+    .timeline { padding: 64px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Prompt<span>Master</span></div>
+  <button class="nav-cta">Quero Meu MVP</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow-2"></div>
+
+  <div class="hero-badge">Laravel · FilamentPHP · TALL Stack</div>
+
+  <h1 class="hero-title">
+    Seu MVP<br>
+    <span class="accent">em 4 horas.</span>
+    <span class="outline">Não em meses.</span>
+  </h1>
+
+  <p class="hero-sub">
+    A diferença entre um dev que usa IA e um dev que <strong>domina IA</strong> não é o modelo. É a qualidade do prompt. Veja ao vivo como construir um sistema completo com <strong>Laravel + FilamentPHP + TALL Stack</strong> usando prompts cirúrgicos.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">Começar Agora</a>
+    <a href="#comparison" class="btn-secondary">Ver Comparação</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">4h</div>
+      <div class="stat-label">Tempo médio de MVP</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">93%</div>
+      <div class="stat-label">Menos retrabalho</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">10×</div>
+      <div class="stat-label">Qualidade do output</div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK STRIP -->
+<div style="background:var(--surface-1); border-top:1px solid var(--surface-3); border-bottom:1px solid var(--surface-3); padding:24px 48px; display:flex; align-items:center; gap:48px; overflow-x:auto;">
+  <span style="font-family:'Space Mono',monospace; font-size:0.6rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--disabled); white-space:nowrap;">Stack da Demo</span>
+  <div style="display:flex; gap:32px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🔴</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Laravel 11</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🏔️</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">FilamentPHP 3</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">💧</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Livewire 3</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🏔️</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Alpine.js</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🌊</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Tailwind CSS</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🧪</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Pest PHP</span>
+    </div>
+    <div style="color:var(--surface-3)">|</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="color:var(--orange); font-size:1rem;">🔐</span>
+      <span style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--text); font-weight:700;">Spatie Permissions</span>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section">
+  <div class="section-tag">O problema real</div>
+  <h2 class="section-title">
+    O modelo não<br>é o gargalo.<br>
+    <span style="color:var(--orange)">Você é.</span>
+  </h2>
+  <p style="margin-top:32px; font-size:1.05rem; color:var(--muted); max-width:620px; line-height:1.8">
+    Todo mundo tem acesso ao mesmo Claude, ao mesmo GPT-4. Mas um dev pede "crie um Resource no Filament" e recebe um CRUD quebrado. Outro pede com contexto, convenções do Laravel e regras do Filament e recebe um painel completo — com relations, actions, filtros e políticas — <strong style="color:var(--text)">em 20 minutos</strong>. A variável? O prompt.
+  </p>
+</section>
+
+<!-- COMPARISON -->
+<section class="comparison" id="comparison">
+  <div class="section-tag">Prompt vs Prompt</div>
+  <h2 class="section-title">Veja a<br>diferença em<br><span style="color:var(--orange)">tempo real.</span></h2>
+
+  <div class="comparison-grid">
+    <div class="comp-col bad">
+      <div class="comp-header bad-label">❌ Prompt Amador</div>
+      <div class="code-block"><span class="code-comment">// O que a maioria faz:</span>
+
+crie um resource no filament
+para gerenciar pedidos
+</div>
+      <div class="comp-result bad-result">
+        <span>⚠</span> Output: Resource básico sem policies, sem relations, sem filtros, sem actions customizadas. Requer 2 dias de ajuste manual.
+      </div>
+    </div>
+
+    <div class="comp-divider">VS</div>
+
+    <div class="comp-col good">
+      <div class="comp-header good-label">✓ Prompt Master</div>
+      <div class="code-block good-code"><span class="code-comment">// Método PromptMaster:</span>
+
+<span class="code-key">STACK:</span> Laravel 11, Filament 3, Livewire 3
+<span class="code-key">CONTEXTO:</span> SaaS multi-tenant, Spatie Roles
+<span class="code-key">MODEL:</span> Order (hasMany items, belongsTo client)
+<span class="code-key">RESOURCE:</span> OrderResource com:
+ - Table: colunas + searchable + sortable
+ - Filtros: status, date_range, client_id
+ - Actions: Aprovar, Cancelar (com modal)
+ - RelationManager: OrderItemsRelation
+ - Policy: gate por role (admin/operator)
+<span class="code-key">FORM:</span> Wizard 3 steps + auto-save draft
+<span class="code-key">EVENTOS:</span> OrderApproved → notify via queue</div>
+      <div class="comp-result good-result">
+        <span>✓</span> Output: Resource completo, tipado, com policies, relations, events e queue. Pronto para produção em 18 minutos.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="timeline">
+  <div class="section-tag">O método em prática</div>
+  <h2 class="section-title" style="max-width:500px">De ideia a MVP<br><span style="color:var(--orange)">em 4 horas.</span></h2>
+
+  <div class="timeline-steps">
+    <div class="t-step">
+      <div class="t-num">01</div>
+      <div class="t-content">
+        <div class="t-time">00:00 — 00:30</div>
+        <div class="t-title">Context Priming do Projeto</div>
+        <p class="t-desc">Monte o prompt-base com versões exatas (Laravel 11, Filament 3.x, Livewire 3), convenções do time, estrutura de pastas e regras de negócio. O LLM passa a "conhecer" seu projeto como um sênior do time.</p>
+        <span class="t-tag">Context Priming</span>
+      </div>
+    </div>
+
+    <div class="t-step">
+      <div class="t-num">02</div>
+      <div class="t-content">
+        <div class="t-time">00:30 — 01:30</div>
+        <div class="t-title">Models, Migrations e Relations</div>
+        <p class="t-desc">Spec-driven prompting para Eloquent: defina cada Model com suas relations, scopes, accessors e casts antes de gerar. Receba migrations com índices corretos e factories prontas para teste.</p>
+        <span class="t-tag">Spec-Driven Prompting</span>
+      </div>
+    </div>
+
+    <div class="t-step">
+      <div class="t-num">03</div>
+      <div class="t-content">
+        <div class="t-time">01:30 — 02:30</div>
+        <div class="t-title">Filament Resources & Livewire Components</div>
+        <p class="t-desc">Gere Resources completos (Table, Form, Actions, Filters, RelationManagers) e componentes Livewire com Alpine.js em prompts estruturados. Zero boilerplate manual.</p>
+        <span class="t-tag">Component Prompting</span>
+      </div>
+    </div>
+
+    <div class="t-step">
+      <div class="t-num">04</div>
+      <div class="t-content">
+        <div class="t-time">02:30 — 03:30</div>
+        <div class="t-title">Policies, Queues e Notificações</div>
+        <p class="t-desc">Prompts de meta-output para Spatie Permissions, Jobs, Events e Notifications. O modelo gera toda a camada de segurança e comunicação assíncrona com contexto do seu domínio.</p>
+        <span class="t-tag">Architecture Prompting</span>
+      </div>
+    </div>
+
+    <div class="t-step">
+      <div class="t-num">05</div>
+      <div class="t-content">
+        <div class="t-time">03:30 — 04:00</div>
+        <div class="t-title">Testes Pest e Deploy</div>
+        <p class="t-desc">Prompt de review gera suíte Pest com Feature e Unit tests, cobertura real dos fluxos críticos. MVP revisado, testado e no ar — com Forge ou Ploi — antes das 4 horas.</p>
+        <span class="t-tag">Test & Deploy Prompting</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="section-tag">O que você aprende</div>
+  <h2 class="section-title">Técnicas que<br><span style="color:var(--orange)">mudam o jogo.</span></h2>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">🏗️</span>
+      <div class="feature-title">Filament Resource Mastery</div>
+      <p class="feature-desc">Prompts que geram Resources completos — Tables com bulk actions, Forms com wizards, Infolists e RelationManagers — sem uma linha de boilerplate manual.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">⚡</span>
+      <div class="feature-title">Livewire + Alpine.js Patterns</div>
+      <p class="feature-desc">Context priming com os padrões corretos do Livewire 3 e Alpine.js. Receba componentes reativos com estado gerenciado, sem reinventar a roda.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔐</span>
+      <div class="feature-title">Eloquent & Policies Avançados</div>
+      <p class="feature-desc">Spec-driven para Models com scopes, relations N:N, accessors e casts. Policies integradas ao Spatie Permissions geradas com contexto de negócio real.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔄</span>
+      <div class="feature-title">Queue, Events & Notifications</div>
+      <p class="feature-desc">Prompts de arquitetura para Jobs, Events, Listeners e Notifications. O modelo entende o fluxo assíncrono do seu domínio e gera código coeso e testável.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🧪</span>
+      <div class="feature-title">Pest Tests com Factory Coverage</div>
+      <p class="feature-desc">Prompts que geram Feature tests e Unit tests com Pest, usando Factories e fakes. Cobertura real dos fluxos críticos, não apenas happy path.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🚀</span>
+      <div class="feature-title">Deploy com Forge & Ploi</div>
+      <p class="feature-desc">Do código ao servidor: prompts para configurar pipelines de CI, scripts de deploy e variáveis de ambiente. MVP em produção antes do prazo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-tag">Resultados reais</div>
+  <h2 class="section-title">Devs que<br><span style="color:var(--orange)">já aplicaram.</span></h2>
+
+  <div class="t-grid">
+    <div class="t-card">
+      <p class="t-quote">Construí um painel admin completo com FilamentPHP em 5 horas — multi-tenant, com roles e 8 Resources. Meu cliente pensou que eu tinha um time. Era só eu e um prompt bem feito.</p>
+      <div class="t-author">
+        <div class="t-avatar">RM</div>
+        <div>
+          <div class="t-name">Rafael Moura</div>
+          <div class="t-role">Laravel Dev · São Paulo</div>
+        </div>
+      </div>
+    </div>
+    <div class="t-card">
+      <p class="t-quote">Parei de lutar contra o Livewire. Com context priming, o modelo passou a gerar componentes no padrão correto, com $wire, Alpine e lazy loading. Sem mais refatoração.</p>
+      <div class="t-author">
+        <div class="t-avatar">AL</div>
+        <div>
+          <div class="t-name">Ana Lima</div>
+          <div class="t-role">Fullstack · TALL Stack · Remote</div>
+        </div>
+      </div>
+    </div>
+    <div class="t-card">
+      <p class="t-quote">Fechei um SaaS de gestão em 2 semanas. Filament cuida do admin, Livewire cuida do front do cliente. O método de prompts me deu velocidade de agência com qualidade de sênior.</p>
+      <div class="t-author">
+        <div class="t-avatar">GS</div>
+        <div>
+          <div class="t-name">Gabriel Santos</div>
+          <div class="t-role">Solo Founder · Laravel SaaS · Recife</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-tag">Investimento</div>
+  <h2 class="section-title">Escolha seu<br><span style="color:var(--orange)">plano.</span></h2>
+
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-tier">Starter</div>
+      <div class="price-value">R$ 97</div>
+      <div class="price-period">pagamento único</div>
+      <ul class="price-features">
+        <li class="active">Módulo 1: Fundamentos</li>
+        <li class="active">10 Templates de Prompt</li>
+        <li class="active">Guia de Context Priming</li>
+        <li>Comunidade Discord</li>
+        <li>Atualizações 1 ano</li>
+      </ul>
+      <button class="price-btn outline">Começar com Starter</button>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-badge">Mais Popular</div>
+      <div class="price-tier">Pro</div>
+      <div class="price-value">R$ 297</div>
+      <div class="price-period">pagamento único</div>
+      <ul class="price-features">
+        <li class="active">Todos os 7 Módulos</li>
+        <li class="active">50+ Templates de Prompt</li>
+        <li class="active">4 Projetos Guiados</li>
+        <li class="active">Comunidade Discord VIP</li>
+        <li class="active">Atualizações vitalícias</li>
+      </ul>
+      <button class="price-btn primary">Quero o Pro</button>
+    </div>
+
+    <div class="price-card">
+      <div class="price-tier">Expert</div>
+      <div class="price-value">R$ 797</div>
+      <div class="price-period">pagamento único</div>
+      <ul class="price-features">
+        <li class="active">Tudo do Pro</li>
+        <li class="active">2 Sessões de Mentoria 1:1</li>
+        <li class="active">Code Review Personalizado</li>
+        <li class="active">Acesso antecipado a módulos</li>
+        <li class="active">Certificado de Conclusão</li>
+      </ul>
+      <button class="price-btn outline">Acesso Expert</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2 class="cta-final-title">
+    Pare de<br>
+    desperdiçar<br>
+    <span class="orange">tokens.</span>
+  </h2>
+  <p class="cta-final-sub">
+    Cada prompt mal estruturado é tempo e dinheiro perdido. Aprenda o método agora e construa seu próximo MVP ainda essa semana.
+  </p>
+  <div class="cta-box">
+    <a href="#pricing" class="btn-primary" style="font-size:1rem; padding:20px 48px">Quero Meu MVP em 4 Horas</a>
+    <span class="cta-guarantee">✓ Garantia de 7 dias · ✓ Sem mensalidade · ✓ Acesso imediato</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">Prompt<span>Master</span></div>
+  <div class="footer-copy">© 2025 PromptMaster · Todos os direitos reservados</div>
+</footer>
+
+<script>
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.style.opacity = '1';
+        el.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .t-card, .price-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+
+  // Nav CTA scroll
+  document.querySelector('.nav-cta').addEventListener('click', () => {
+    document.querySelector('#pricing').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+
+</body>
+</html>
